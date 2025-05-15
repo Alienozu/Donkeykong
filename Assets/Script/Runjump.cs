@@ -40,7 +40,7 @@ public class Runjump : MonoBehaviour
             isGrounded = false; // ここで明示的に false にしておくと安全
         }
 
-        if (Input.GetKeyDown(KeyCode.Z) && horizontal != 0)
+        if (Input.GetKeyDown(KeyCode.Z) && isGrounded && horizontal != 0)
         {
             rollTimer = rollDuration;
             rollDirection = new Vector2(Mathf.Sign(horizontal),0 );
