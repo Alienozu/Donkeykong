@@ -12,10 +12,13 @@ public class Runjump : MonoBehaviour
     public float rollSpeed = 10f;
     public float rollDuration = 1f;
     private float rollTimer = 0f;
+    public float groundCheckRadius = 0.1f;
     private Vector2 rollDirection;
-    private Rigidbody2D rb;
     private bool isGrounded = false;
     private bool isRolling = true;
+    private Rigidbody2D rb;
+    public Transform groundCheck;
+    public LayerMask groundLayer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
@@ -27,6 +30,7 @@ public class Runjump : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         float horizontal = Input.GetAxis("Horizontal");
         transform.Translate(Vector2.right * horizontal * speed * Time.deltaTime);
 
@@ -41,7 +45,7 @@ public class Runjump : MonoBehaviour
             rollTimer = rollDuration;
             rollDirection = new Vector2(Mathf.Sign(horizontal),0 );
             rb.linearVelocity = rollDirection * rollSpeed;
-            Debug.Log("Zcheck");
+            Debug.Log("Z check");
         }
        
     }
