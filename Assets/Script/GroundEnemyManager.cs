@@ -1,12 +1,17 @@
 using UnityEngine;
 using System.Collections;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class GroundEnemyManager : MonoBehaviour
 {
     //地上敵のスクリプト
     public bool isVisible;
     public GameObject DeathEffect;
     public GameObject Bear;
+    private BoxCollider2D bearCollider;
+    private EdgeCollider2D attackedCollider;
+    private Rigidbody2D rb;
+    private Transform enemyTransform;
+    private Vector2 rayerEdge;
 
     private bool facedLeft = true;   // 方向変換
     private bool die = false;        // 死亡チェック
@@ -17,29 +22,24 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
     private float slopeAngle;
 
-    //プレイヤ
-    private GameObject Player;
-    private Transform playerPosition;
-    private Vector2 playerPos;
-    private float playerPosX;
-
-
-    private Transform enemyTransform;
-
-    private Vector2 pos;
-    private Vector2 rayerEdge;
-
     private Vector2 normal;  //法線ベクトル
     private int slopeCheck;
 
-    private CapsuleCollider2D bearCollider;
-    private Rigidbody2D rb;
 
     private Vector2 lastPosition;
     private Vector2 currentPosition;
     Vector2 speed;
 
-    private double _time;
+
+    //プレイヤ
+    private GameObject Player;
+    private Transform playerPosition;
+    private Vector2 playerPos;
+    private float playerPosX;
+    bool rollingCheck;
+    Runjump playerScript;
+
+
 
     void Start()
     {
@@ -47,13 +47,15 @@ public class NewMonoBehaviourScript : MonoBehaviour
         animator = GetComponent<Animator>();
         animator.SetBool("isRunning", false);
         GetComponent<Animator>().enabled = false;
-        
-        bearCollider = gameObject.GetComponent<CapsuleCollider2D>();
+
+        bearCollider = gameObject.GetComponent<BoxCollider2D>();
+        attackedCollider = gameObject.GetComponent<EdgeCollider2D>();
 
         rb = gameObject.GetComponent<Rigidbody2D>();
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-        Player = GameObject.Find("Playwer");
+        Player = GameObject.Find("Player");
+        playerScript = Player.GetComponent<Runjump>();
         playerPosition = Player.GetComponent<Transform>();
 
         lastPosition = gameObject.transform.position;
@@ -64,7 +66,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     void Update()
     {
         //横方向の移動
-        if (isVisible)
+        if (isVisible && !die)
         {
             Vector2 now = rb.position;
 
@@ -75,27 +77,25 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 now += new Vector2(0.02f * direction, 0);
                 rb.position = now;
             }
-            else if(isSlope)　
-            { 
+            else if (isSlope)
+            {
                 now += new Vector2(0.02f * direction, 0.00489f * slopeCheck);
                 rb.position = now;
             }
         }
 
+        rollingCheck = playerScript.isRolling;
+
+
         currentPosition = gameObject.transform.position;
         speed = (currentPosition - lastPosition) / Time.deltaTime;
 
-        //死亡時
-        if (die)
-        {
-            _time += Time.deltaTime;
-        }
     }
 
     private void FixedUpdate()
     {
         //崖際に来た時に折り返す
-        if(isVisible && !die)
+        if (isVisible && !die)
         {
             Physics2D.SyncTransforms(); // コライダーの更新を強制
             rayerEdge = facedLeft ? bearCollider.bounds.min : new Vector2(bearCollider.bounds.max.x, bearCollider.bounds.min.y);
@@ -113,7 +113,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 ChangeScale();
             }
 
-            if (hit.collider != null && hit.collider.gameObject.layer == 7 )
+            if (hit.collider != null && hit.collider.gameObject.layer == 7)
             {
                 isSlope = true;
 
@@ -129,7 +129,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
                     {
                         slopeCheck = -3;
                     }
-                }                
+                }
             }
 
             if (hit.collider != null && hit.collider.gameObject.layer == 6)
@@ -137,13 +137,6 @@ public class NewMonoBehaviourScript : MonoBehaviour
                 isSlope = false;
                 slopeCheck = 1;
             }
-        }
-
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            die = true;
-            DieEnemy();
         }
 
     }
@@ -163,7 +156,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     private void OnBecameVisible()
     {
         isVisible = true;
-        
+
         GetComponent<Animator>().enabled = true;
     }
     //カメラの外ではオブジェクトを削除する
@@ -174,45 +167,51 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
     [System.Obsolete]
     private void OnTriggerEnter2D(Collider2D collision)
-    {    
+    {
         //プレイヤに踏まれた時
-        if(collision.gameObject.tag == "Player")
+        if (collision.gameObject.tag == "Player")
         {
             GameObject pla = collision.gameObject;
-            BoxCollider2D collisionCollider = pla.GetComponent<BoxCollider2D>();
-            Transform collisionTransform = pla.GetComponent<Transform>();
             Rigidbody2D collRigidbody = pla.GetComponent<Rigidbody2D>();
-            
-           if(collRigidbody.velocity.y　< 0)
+
+            if (collRigidbody.velocity.y <= 0)
             {
                 DieEnemy();
             }
+
         }
     }
+
+    [System.Obsolete]
     private void OnCollisionEnter2D(Collision2D collision)
     {
         //敵同士の接触時における反転
-        if(collision.gameObject.tag == "Enemy")
+        if (collision.gameObject.tag == "Enemy")
         {
             Rigidbody2D collisionRigidbody = collision.gameObject.GetComponent<Rigidbody2D>();
             Vector2 colliVelocity = collisionRigidbody.linearVelocity;
 
             if (colliVelocity.x * speed.x <= 0)
             {
-                facedLeft = ! facedLeft;
+                facedLeft = !facedLeft;
                 ChangeScale();
             }
         }
+
+
+
     }
+
 
     void DieEnemy()
     {
-        gameObject.GetComponent<CapsuleCollider2D>().enabled = false;
+        gameObject.GetComponent<BoxCollider2D>().enabled = false;
         rb.bodyType = RigidbodyType2D.Kinematic;
 
+        sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, 70 / 255f);
         die = true;
 
-        StartCoroutine(DeadMotion(1f));
+        StartCoroutine(DeadMotion(0.3f));
     }
 
     private IEnumerator DeadMotion(float deleyTime)
