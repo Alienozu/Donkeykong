@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Diagnostics;
 using UnityEngine;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
@@ -15,12 +16,12 @@ public class Runjump : MonoBehaviour
     private Vector2 rollDirection;
     private Rigidbody2D rb;
     private bool isGrounded = false;
-    private bool isRolling = true;
+    public bool isRolling;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.freezeRotation = true;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 
 
@@ -37,20 +38,32 @@ public class Runjump : MonoBehaviour
             isGrounded = false; // ここで明示的に false にしておくと安全
         }
 
-        if (Input.GetKeyDown(KeyCode.Z) && isGrounded && horizontal != 0)
+        if (Input.GetKey(KeyCode.Z) && isGrounded && horizontal != 0)
         {
             rollTimer = rollDuration;
             rollDirection = new Vector2(Mathf.Sign(horizontal), 0);
             rb.linearVelocity = rollDirection * rollSpeed;
             Debug.Log("Z.Check");
+            isRolling = true;
         }
 
     }
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+        }
+
+        //ローリングをエネミーに通知する
+        if (isRolling && collision.gameObject.CompareTag("Enemy"))
+        {
+            EnemiesLife enemy = collision.gameObject.GetComponent<EnemiesLife>();
+            if (enemy != null)
+            {
+                enemy.HitByRolling();
+            }
         }
     }
     void OnCollisionExit2D(Collision2D collision)
@@ -60,5 +73,4 @@ public class Runjump : MonoBehaviour
             isGrounded = false;
         }
     }
-
 }
