@@ -17,7 +17,6 @@ public class Runjump : MonoBehaviour
     private Rigidbody2D rb;
     private bool isGrounded = false;
     public bool isRolling;
-    public GameObject handSlapEffect;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
@@ -44,46 +43,12 @@ public class Runjump : MonoBehaviour
             rollTimer = rollDuration;
             rollDirection = new Vector2(Mathf.Sign(horizontal), 0);
             rb.linearVelocity = rollDirection * rollSpeed;
-            UnityEngine.Debug.Log("Z.Check");
+            Debug.Log("Z.Check");
             isRolling = true;
         }
 
-        bool isCrouching = Input.GetKey(KeyCode.DownArrow);
-        if (Input.GetKeyDown(KeyCode.X) && isCrouching && isGrounded)
-        {
-            DoHandSlap();
-        }
-
     }
 
-    
-
-    void DoHandSlap()
-    {
-        // エフェクトの位置（キャラの下）
-        Vector2 effectPos = new Vector2(transform.position.x, transform.position.y - 0.6f);
-
-        // エフェクトを生成
-        Instantiate(handSlapEffect, effectPos, Quaternion.identity);
-        // アニメーション再生（必要であれば）
-        // animator.SetTrigger("HandSlap");
-
-        // 地面に向かってOverlapBoxなどで当たり判定
-        Vector2 center = new Vector2(transform.position.x, transform.position.y - 0.5f);
-        Vector2 size = new Vector2(5.0f, 0.2f); // スラップの範囲
-        LayerMask enemyLayer = LayerMask.GetMask("Enemy");
-
-        Collider2D[] hits = Physics2D.OverlapBoxAll(center, size, 0, enemyLayer);
-        foreach (var hit in hits)
-        {
-            if (hit.CompareTag("Enemy"))
-            {
-                Destroy(hit.gameObject); // 敵を倒す（演出を後で追加しても可）
-            }
-        }
-
-        UnityEngine.Debug.Log("ハンドスラップ発動！");
-    }
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -94,10 +59,10 @@ public class Runjump : MonoBehaviour
         //ローリングをエネミーに通知する
         if (isRolling && collision.gameObject.CompareTag("Enemy"))
         {
-            //EnemiesLife enemy = collision.gameObject.GetComponent<EnemiesLife>();
-            //if (enemy != null)
+            EnemiesLife enemy = collision.gameObject.GetComponent<EnemiesLife>();
+            if (enemy != null)
             {
-                // enemy.HitByRolling();
+                enemy.HitByRolling();
             }
         }
     }
@@ -108,14 +73,4 @@ public class Runjump : MonoBehaviour
             isGrounded = false;
         }
     }
-    private void OnDrawGizmosSelected()
-    {
-        Vector2 center = new Vector2(transform.position.x, transform.position.y - 0.5f);
-        Vector2 size = new Vector2(1.0f, 0.2f);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(center, size);
-    }
-
-   
-
 }
