@@ -94,10 +94,10 @@ public class Runjump : MonoBehaviour
         //ローリングをエネミーに通知する
         if (isRolling && collision.gameObject.CompareTag("Enemy"))
         {
-             EnemiesLife enemy = collision.gameObject.GetComponent<EnemiesLife>();
-           if (enemy != null)
+            //EnemiesLife enemy = collision.gameObject.GetComponent<EnemiesLife>();
+            //if (enemy != null)
             {
-                enemy.HitByRolling();
+                // enemy.HitByRolling();
             }
         }
     }
