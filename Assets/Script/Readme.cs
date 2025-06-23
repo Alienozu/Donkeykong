@@ -3,7 +3,7 @@
 このガイドは、`DonkeyPlayerController` スクリプトを正しく動作させるための Unity エディタ上の設定手順を記載しています。
 
 ---
-
+    　
 ## ✅ GroundCheck の設定手順
 
 `DonkeyPlayerController` は、ジャンプ可能かを判定するために `groundCheck` という `Transform` を使用します。これはプレイヤーキャラクターの足元に置く必要があります。
